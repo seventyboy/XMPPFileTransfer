@@ -1,18 +1,10 @@
 package org.xmpp.xmppfiletransfer;
 
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,20 +17,13 @@ import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.ReconnectionManager;
 import org.jivesoftware.smack.SmackConfiguration;
-import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.iqrequest.AbstractIqRequestHandler;
 import org.jivesoftware.smack.iqrequest.IQRequestHandler;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.provider.ProviderManager;
-import org.jivesoftware.smack.roster.Roster;
 
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
-import org.jivesoftware.smackx.filetransfer.FileTransferListener;
 import org.jivesoftware.smackx.filetransfer.FileTransferManager;
-import org.jivesoftware.smackx.filetransfer.FileTransferRequest;
-import org.jivesoftware.smackx.filetransfer.IncomingFileTransfer;
 
 
 /*
@@ -55,14 +40,13 @@ public class XMPP
 {
     
 
-    public String DIR="C:\\Users";
     
  public SenderHandler createHandler(){
      
       ConnectionConfiguration config;  
         XMPPTCPConnection conn = null;
         SSLContext sc = null;
-    final SenderHandler handler ;
+    
        
      
       sc = this.buildSSLContext();
@@ -97,13 +81,16 @@ public class XMPP
         
        Transfers transfers = new Transfers();
           
-        transfers.DIR = this.DIR;
+   
+        
     ProviderManager.addIQProvider(
          IQRemoteSize.ELEMENT, IQRemoteSize.NAMESPACE,new RemoteSizeProvider());
    
      ReconnectionManager.getInstanceFor(conn).enableAutomaticReconnection();
-     
-    handler = new SenderHandler(conn, transfers);
+     SenderHandler handler = new SenderHandler((XMPPTCPConnection) conn, transfers);
+  
+
+   
     ReceiveFileRequestHandler receiverHandler = new ReceiveFileRequestHandler (
              transfers, IQRemoteSize.ELEMENT, IQRemoteSize.NAMESPACE,IQ.Type.get, 
                  IQRequestHandler.Mode.async);
@@ -111,11 +98,12 @@ public class XMPP
     FileReceiverHandler fileReceiver = new FileReceiverHandler(transfers);
     
     FileTransferManager.getInstanceFor(conn).addFileTransferListener( fileReceiver);
-     
+    
      conn.registerIQRequestHandler(receiverHandler);
-     
+       Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "connesso cazzarola!");
     System.out.println("clietn avviato");
-    return handler;
+   
+     return handler;
  }
             
        
@@ -155,11 +143,6 @@ public class XMPP
       private CopyOnWriteArrayList<ConnectionListener> listeners = 
               new CopyOnWriteArrayList<> ();
     
-    public void addListener(ConnectionListener l) {
-       listeners.add(l);
-   
-       
-    }
 
 
     private SSLContext buildSSLContext(){
@@ -192,6 +175,7 @@ public class XMPP
          final SSLSocketFactory sslSocketFactory =sslContext.getSocketFactory();
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(XMPP.class.getName()).log(Level.SEVERE, null, ex);
+           
             return null;
         } catch (KeyManagementException ex) {
             Logger.getLogger(XMPP.class.getName()).log(Level.SEVERE, null, ex);

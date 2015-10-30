@@ -10,10 +10,13 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
 import javax.swing.JFileChooser;
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.SmackException;
@@ -33,9 +36,12 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
      * Creates new form Main
      */
     public Main() {
+        
         initComponents();
+       
+        this.setHanlder();
     }
-
+    TextAreaOutputStream outputStream ;
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -51,6 +57,10 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
         users1 = new GUI.Users();
         connessione1 = new GUI.Connessione();
         fileTransfer1 = new GUI.FileTransfer();
+        jScrollPaneTextArea = new javax.swing.JScrollPane();
+        jTextAreaOutput = new javax.swing.JTextArea();
+        jScrollPaneTextAreaLog = new javax.swing.JScrollPane();
+        jTextAreaLog = new javax.swing.JTextArea();
         jPanelConnectionStatus3 = new GUI.JPanelConnectionStatus();
         jMenuBarConnessioni = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
@@ -58,6 +68,9 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
         jMenuAspetta = new javax.swing.JMenu();
         jMenuItemUsers = new javax.swing.JMenuItem();
         jMenuItemFileTransfer = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
+        jMenuItemTextArea = new javax.swing.JMenuItem();
+        jMenuItemTextAreaLog = new javax.swing.JMenuItem();
 
         jLabel1.setText("jLabel1");
 
@@ -113,6 +126,18 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
         });
         jPanel1.add(fileTransfer1, "file transfer");
 
+        jTextAreaOutput.setColumns(20);
+        jTextAreaOutput.setRows(5);
+        jScrollPaneTextArea.setViewportView(jTextAreaOutput);
+
+        jPanel1.add(jScrollPaneTextArea, "text area");
+
+        jTextAreaLog.setColumns(20);
+        jTextAreaLog.setRows(5);
+        jScrollPaneTextAreaLog.setViewportView(jTextAreaLog);
+
+        jPanel1.add(jScrollPaneTextAreaLog, "text area log");
+
         getContentPane().add(jPanel1);
         getContentPane().add(jPanelConnectionStatus3);
 
@@ -153,6 +178,31 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
 
         jMenuBarConnessioni.add(jMenuAspetta);
 
+        jMenu2.setText("textarea");
+        jMenu2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenu2ActionPerformed(evt);
+            }
+        });
+
+        jMenuItemTextArea.setText("jMenuItem1");
+        jMenuItemTextArea.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemTextAreaActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItemTextArea);
+
+        jMenuItemTextAreaLog.setText("jMenuItem1");
+        jMenuItemTextAreaLog.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemTextAreaLogActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItemTextAreaLog);
+
+        jMenuBarConnessioni.add(jMenu2);
+
         setJMenuBar(jMenuBarConnessioni);
 
         pack();
@@ -182,9 +232,9 @@ private void jButtonConnectMouseClicked(java.awt.event.MouseEvent evt) {
                 connessione1.jTextFieldUsername.getText(), 
                 connessione1.jTextFieldPassword.getText());
        
-       
         XMPPHandler = client.createHandler();
-         client.addListener(this.jPanelConnectionStatus3);
+       
+               XMPPHandler.addConnectionListener(this);
         XMPPHandler.start();
           System.out.println("clacla" + client);
     }                                          
@@ -213,16 +263,19 @@ private void jButtonConnectMouseClicked(java.awt.event.MouseEvent evt) {
 
 }
     private void sendFile(java.awt.event.MouseEvent evt){
-        String JID =(String)fileTransfer1.jComboBoxUserSelect.getSelectedItem();
-        String filename =fileTransfer1.jLabelFile.getText();
-        File file = fileTransfer1.jFileChooser1.getSelectedFile();
-        do{
-          XMPPHandler.requestRemoteFileSize(JID, file);
-            XMPPHandler.transferFile(JID, file); 
-        }
-       
-        while ( XMPPHandler.getLastRemoteFileSize(JID, file) < file.length());
-       
+         Thread transferThread = new Thread(new Runnable() {
+            public void run() {
+                String JID =(String)fileTransfer1.jComboBoxUserSelect.getSelectedItem();
+                String filename =fileTransfer1.jLabelFile.getText();
+                File file = fileTransfer1.jFileChooser1.getSelectedFile();
+               
+                    XMPPHandler.transferFile(JID, file);
+
+                
+
+            }
+         });
+        transferThread.start();
     }
     private void users1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_users1MouseClicked
         // TODO add your handling code here:
@@ -238,6 +291,23 @@ private void jButtonConnectMouseClicked(java.awt.event.MouseEvent evt) {
           CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
     cl.show(this.jPanel1, "file transfer");
     }//GEN-LAST:event_jMenuItemFileTransferActionPerformed
+
+    private void jMenu2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenu2ActionPerformed
+        // TODO add your handling code here:
+    
+    }//GEN-LAST:event_jMenu2ActionPerformed
+
+    private void jMenuItemTextAreaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemTextAreaActionPerformed
+        // TODO add your handling code here:
+              CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
+    cl.show(this.jPanel1, "text area");
+    }//GEN-LAST:event_jMenuItemTextAreaActionPerformed
+
+    private void jMenuItemTextAreaLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemTextAreaLogActionPerformed
+        // TODO add your handling code here:
+         CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
+         cl.show(this.jPanel1, "text area log");
+    }//GEN-LAST:event_jMenuItemTextAreaLogActionPerformed
 
     /**
      * @param args the command line arguments
@@ -274,31 +344,42 @@ private void jButtonConnectMouseClicked(java.awt.event.MouseEvent evt) {
         });
     }
  XMPP client = null;
+ TextAreaHandler handler;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private GUI.Connessione connessione1;
     private GUI.FileTransfer fileTransfer1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenu jMenu2;
     private javax.swing.JMenu jMenuAspetta;
     private javax.swing.JMenuBar jMenuBarConnessioni;
     private javax.swing.JMenuItem jMenuItemFileTransfer;
     private javax.swing.JMenuItem jMenuItemNuovaConnessione;
+    private javax.swing.JMenuItem jMenuItemTextArea;
+    private javax.swing.JMenuItem jMenuItemTextAreaLog;
     private javax.swing.JMenuItem jMenuItemUsers;
     private javax.swing.JPanel jPanel1;
     private GUI.JPanelConnectionStatus jPanelConnectionStatus1;
     private GUI.JPanelConnectionStatus jPanelConnectionStatus3;
+    private javax.swing.JScrollPane jScrollPaneTextArea;
+    private javax.swing.JScrollPane jScrollPaneTextAreaLog;
+    private javax.swing.JTextArea jTextAreaLog;
+    private javax.swing.JTextArea jTextAreaOutput;
     private GUI.Users users1;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public void connected(XMPPConnection connection) {
-       this.jPanelConnectionStatus3.jLabelColor.setBackground(Color.red);
+
+       this.jPanelConnectionStatus3.jLabelStatus.setText("connesso : in autenticazione");
        System.out.println("fanto");
     }
 
     @Override
     public void authenticated(XMPPConnection connection, boolean resumed) {
-       
+         this.jPanelConnectionStatus3.jLabelColor.setBackground(Color.green);
+         this.jPanelConnectionStatus3.jLabelColor.setForeground(Color.green);
+          this.jPanelConnectionStatus3.jLabelStatus.setText("autenticato");
     }
 
     @Override
@@ -308,21 +389,35 @@ private void jButtonConnectMouseClicked(java.awt.event.MouseEvent evt) {
 
     @Override
     public void connectionClosedOnError(Exception e) {
-       
+        this.jPanelConnectionStatus3.jLabelColor.setBackground(Color.RED);
+         this.jPanelConnectionStatus3.jLabelColor.setForeground(Color.RED);
+          this.jPanelConnectionStatus3.jLabelStatus.setText("connessione chiusa per errore");
+         
     }
 
     @Override
     public void reconnectionSuccessful() {
-        throw new UnsupportedOperationException("Not supported yet."); 
+       
     }
 
     @Override
     public void reconnectingIn(int seconds) {
-        throw new UnsupportedOperationException("Not supported yet."); 
+       
     }
 
     @Override
     public void reconnectionFailed(Exception e) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        
+    }
+    private void setHanlder(){
+      outputStream = new TextAreaOutputStream(this.jTextAreaOutput);
+       PrintStream printStream = new PrintStream(new TextAreaOutputStream(
+               this.jTextAreaOutput));
+        handler=new TextAreaHandler(this.jTextAreaLog);
+          handler.setLevel(Level.ALL);
+          Logger.getLogger(XMPP.class.getName()).addHandler(handler);
+          System.setOut(printStream);
+        System.setErr(printStream);
+       
     }
 }

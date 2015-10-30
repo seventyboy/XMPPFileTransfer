@@ -14,7 +14,7 @@ import java.util.HashMap;
 public class Transfers {
     private  final HashMap<RemoteFile,Long> incomingFiles = new HashMap();
     private  final HashMap<RemoteFile,Long> outcomingFiles = new HashMap();
-    public  String DIR;
+    public  String DIR = "c:\\users";
 
     public Transfers() {
     }

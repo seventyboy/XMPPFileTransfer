@@ -13,7 +13,7 @@ import org.jivesoftware.smack.XMPPConnection;
  *
  * @author ivo.dipumpo
  */
-public class JPanelConnectionStatus extends javax.swing.JPanel implements ConnectionListener{
+public class JPanelConnectionStatus extends javax.swing.JPanel {
 
     /**
      * Creates new form JPanelConnectionStatus
@@ -34,11 +34,15 @@ public class JPanelConnectionStatus extends javax.swing.JPanel implements Connec
         jLabelStatus = new javax.swing.JLabel();
         jLabelColor = new javax.swing.JLabel();
 
+        setBorder(javax.swing.BorderFactory.createEtchedBorder(new java.awt.Color(204, 0, 204), null));
+        setToolTipText("");
+
         jLabelStatus.setForeground(new java.awt.Color(0, 153, 102));
         jLabelStatus.setText("jLabel1");
 
         jLabelColor.setBackground(new java.awt.Color(255, 0, 51));
-        jLabelColor.setText("jLabel2");
+        jLabelColor.setForeground(new java.awt.Color(255, 0, 51));
+        jLabelColor.setText("non connesso");
         jLabelColor.setOpaque(true);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -46,61 +50,30 @@ public class JPanelConnectionStatus extends javax.swing.JPanel implements Connec
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(121, Short.MAX_VALUE)
+                .addContainerGap(84, Short.MAX_VALUE)
                 .addComponent(jLabelStatus)
                 .addGap(64, 64, 64)
                 .addComponent(jLabelColor)
-                .addGap(147, 147, 147))
+                .addGap(148, 148, 148))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 11, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabelStatus)
-                    .addComponent(jLabelColor)))
+                    .addComponent(jLabelColor)
+                    .addComponent(jLabelStatus))
+                .addGap(0, 11, Short.MAX_VALUE))
         );
+
+        getAccessibleContext().setAccessibleName("pp");
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public javax.swing.JLabel jLabelColor;
-    private javax.swing.JLabel jLabelStatus;
+    public javax.swing.JLabel jLabelStatus;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public void connected(XMPPConnection connection) {
-        this.jLabelColor.setBackground(Color.green);
-        this.jLabelStatus.setText(String.valueOf(connection.isConnected()));
-    }
-
-    @Override
-    public void authenticated(XMPPConnection connection, boolean resumed) {
-       
-    }
-
-    @Override
-    public void connectionClosed() {
-         this.jLabelColor.setBackground(Color.red);
-    }
-
-    @Override
-    public void connectionClosedOnError(Exception e) {
-        this.jLabelColor.setBackground(Color.red);
-    }
-
-    @Override
-    public void reconnectionSuccessful() {
-      this.jLabelColor.setBackground(Color.green);
-    }
-
-    @Override
-    public void reconnectingIn(int seconds) {
-         this.jLabelColor.setBackground(Color.red);
-    }
-
-    @Override
-    public void reconnectionFailed(Exception e) {
-        this.jLabelColor.setBackground(Color.red);
-    }
+   
 }

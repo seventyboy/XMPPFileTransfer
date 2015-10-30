@@ -29,12 +29,11 @@ import org.jivesoftware.smackx.si.packet.StreamInitiation;
  * @author ivo.dipumpo
  */
 public class ReceiveFileRequestHandler extends AbstractIqRequestHandler {
-    public String DIR="c:";
     final Transfers transfers;
 
     public ReceiveFileRequestHandler(Transfers transfers, String element, String namespace, IQ.Type type, Mode mode) {
         super(element, namespace, type, mode);
-        this.DIR = transfers.DIR;
+      
         this.transfers = transfers;
     }
 
@@ -45,8 +44,8 @@ public class ReceiveFileRequestHandler extends AbstractIqRequestHandler {
         IQRemoteSize p = (IQRemoteSize) iqRequest;
         if (p.getType() == IQ.Type.get){
             String filename = p.getFilename();
-            File f = new File(DIR + File.separator + filename);
-            System.out.println(" la stringa" + DIR + File.separator + filename);
+            File f = new File(transfers.DIR + File.separator + filename);
+            System.out.println(transfers.DIR + File.separator + filename);
             if (!f.exists())
 
                     try {
