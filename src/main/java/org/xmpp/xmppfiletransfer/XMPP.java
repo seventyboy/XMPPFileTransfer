@@ -1,6 +1,7 @@
 package org.xmpp.xmppfiletransfer;
 
 
+import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -17,13 +18,21 @@ import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.ReconnectionManager;
 import org.jivesoftware.smack.SmackConfiguration;
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.iqrequest.IQRequestHandler;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.provider.ProviderManager;
 
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smackx.bytestreams.ibb.InBandBytestreamManager;
+import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.filetransfer.FileTransferManager;
+import org.jivesoftware.smackx.filetransfer.FileTransferNegotiator;
+import org.jivesoftware.smackx.iqregister.AccountManager;
+import org.jivesoftware.smackx.ping.PingManager;
+import org.xmpp.xmppfiletransfer.listeners.FileReceiverListener;
 
 
 /*
@@ -41,7 +50,7 @@ public class XMPP
     
 
     
- public SenderHandler createHandler(){
+ public ConnectionHandler createHandler(){
      
       ConnectionConfiguration config;  
         XMPPTCPConnection conn = null;
@@ -62,47 +71,53 @@ public class XMPP
 
         XMPPTCPConnectionConfiguration conf =
                 XMPPTCPConnectionConfiguration.builder()
-                .setHost(server)
+      
                 .setServiceName(server)
                 .setUsernameAndPassword(user, password)
                 .setSecurityMode(SecurityMode.ifpossible)
-
+                 .allowEmptyOrNullUsernames()
                 .setCustomSSLContext(sc)
                 .setSendPresence(true)
                 .setPort(5222)
-                
                
-                .build();
+        
+                .build()
+                ;
 
 
 
 
         conn = new XMPPTCPConnection (conf);
-        
+        conn.setPacketReplyTimeout(10000);
+    
+        PingManager.getInstanceFor(conn).setPingInterval(300);
        Transfers transfers = new Transfers();
-          
-   
+       
+
         
     ProviderManager.addIQProvider(
          IQRemoteSize.ELEMENT, IQRemoteSize.NAMESPACE,new RemoteSizeProvider());
    
      ReconnectionManager.getInstanceFor(conn).enableAutomaticReconnection();
-     SenderHandler handler = new SenderHandler((XMPPTCPConnection) conn, transfers);
-  
-
+    
+     ConnectionHandler handler = new ConnectionHandler((XMPPTCPConnection) conn, transfers);
+     
+   
    
     ReceiveFileRequestHandler receiverHandler = new ReceiveFileRequestHandler (
              transfers, IQRemoteSize.ELEMENT, IQRemoteSize.NAMESPACE,IQ.Type.get, 
                  IQRequestHandler.Mode.async);
     
     FileReceiverHandler fileReceiver = new FileReceiverHandler(transfers);
+    fileReceiver.setListener(receiverListener);
     
+   
     FileTransferManager.getInstanceFor(conn).addFileTransferListener( fileReceiver);
-    
+          
      conn.registerIQRequestHandler(receiverHandler);
        Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "connesso cazzarola!");
-    System.out.println("clietn avviato");
    
+     
      return handler;
  }
             
@@ -111,11 +126,12 @@ public class XMPP
        
     
 
-    public XMPP(String server, int port, String user, String password) {
+    public XMPP(String server, int port, String user, String password, boolean creaUser) {
         this.server = server;
         this.port = port;
         this.user = user;
         this.password = password;
+        this.creaUser = creaUser;
     }
 
     private final String server  ;
@@ -138,7 +154,7 @@ public class XMPP
     public String getPassword() {
         return password;
     }
-
+    private final boolean creaUser ;
  
       private CopyOnWriteArrayList<ConnectionListener> listeners = 
               new CopyOnWriteArrayList<> ();
@@ -184,4 +200,14 @@ public class XMPP
         
         return sc;
     }
+    public void addFileReceiverListener(FileReceiverListener listener){
+        receiverListener = listener;
+    }
+    
+    private FileReceiverListener receiverListener;
+
+    public FileReceiverListener getReceiverListener() {
+        return receiverListener;
+    }
+
 }

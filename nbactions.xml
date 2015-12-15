@@ -80,4 +80,14 @@
                 <goal>clean</goal>
             </goals>
         </action>
+        <action>
+            <actionName>CUSTOM-deploy</actionName>
+            <displayName>deploy</displayName>
+            <goals>
+                <goal>clean:clean</goal>
+                <goal>dependency:unpack-dependencies</goal>
+                <goal>compile</goal>
+                <goal>jar:jar</goal>
+            </goals>
+        </action>
     </actions>

@@ -19,16 +19,28 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.ConnectionListener;
+import org.jivesoftware.smack.PacketCollector;
+import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
+import org.jivesoftware.smack.filter.AndFilter;
+import org.jivesoftware.smack.filter.FromMatchesFilter;
+import org.jivesoftware.smack.filter.IQTypeFilter;
+import org.jivesoftware.smack.filter.StanzaExtensionFilter;
+import org.jivesoftware.smack.filter.StanzaFilter;
+import org.jivesoftware.smack.filter.StanzaIdFilter;
+import org.jivesoftware.smack.filter.StanzaTypeFilter;
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smackx.filetransfer.FileTransferListener;
 import org.jivesoftware.smackx.filetransfer.FileTransferManager;
+import org.jivesoftware.smackx.filetransfer.FileTransferNegotiator;
 import org.jivesoftware.smackx.filetransfer.FileTransferRequest;
 import org.jivesoftware.smackx.filetransfer.IncomingFileTransfer;
 import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
@@ -37,36 +49,32 @@ import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
  *
  * @author ivo.dipumpo
  */
-public class SenderHandler {
+public class Sender {
     private final XMPPTCPConnection connessione;
-    private final Transfers transfers;
     private volatile boolean enabled = false;
-     private CopyOnWriteArrayList<ConnectionListener> listeners = 
-              new CopyOnWriteArrayList<> ();
-    
-    public void addListener(ConnectionListener l) {
-       listeners.add(l);
+    private volatile boolean noStreamHost = false;
+    private volatile long remoteFileSize = 0;
+    private String IDByteStream ="";
+    private final Object lock = new Object();
    
-       
+    private final String JID ;
+
+    public String getJID() {
+        return JID;
     }
 
-    public SenderHandler(XMPPTCPConnection connessione, Transfers transfers) {
-        this.connessione = connessione;
-        this.transfers = transfers;
-        
+       private final File file  ;
+
+    public File getFile() {
+        return file;
     }
-    public void start(){
-        try {
-            connessione.connect();
-            connessione.login();
-        } catch (SmackException ex) {
-            Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (XMPPException ex) {
-            Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-     
+ 
+
+    public Sender(XMPPTCPConnection connessione, String JID, File file) {
+        this.connessione = connessione;
+       this.JID =JID;
+       this.file = file;
+        
     }
 
     public XMPPTCPConnection getConnessione() {
@@ -75,7 +83,7 @@ public class SenderHandler {
 
 
     
-    private void requestRemoteFileSize(String JID, File file) throws 
+    private void requestRemoteFileSize() throws 
             SmackException.NotConnectedException, 
             SmackException.NoResponseException, 
             XMPPErrorException {
@@ -92,7 +100,8 @@ public class SenderHandler {
         reply = connessione.createPacketCollectorAndSend(iq).nextResultOrThrow();
         if (reply != null){
             RemoteFile rf = new RemoteFile(receiver, file.getName());
-            transfers.putOutcomingFile(rf, reply.getFileSize());
+           
+            remoteFileSize = reply.getFileSize().longValue();
             System.out.println("file size" + reply.getFileSize() + " " +
                     rf.getJID() + " " + rf);
 
@@ -100,63 +109,31 @@ public class SenderHandler {
       
             
 }
-    public void findUser(String user)  {
-        
-        Roster roster = Roster.getInstanceFor(connessione);
-        try {
-            roster.createEntry(user, user, null);
-        } catch (SmackException.NotLoggedInException ex) {
-            Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SmackException.NoResponseException ex) {
-            Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (XMPPException.XMPPErrorException ex) {
-            Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SmackException.NotConnectedException ex) {
-            Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-  
-}
 
    
-    public ArrayList<String> getUsers(){
-     
-       ArrayList<String> lista = new ArrayList<String>();
+    public void transferFile()  {
+       
   
         Roster roster = Roster.getInstanceFor(connessione);
-        Iterator<RosterEntry>it = roster.getEntries().iterator();
-        while (it.hasNext()){
-            RosterEntry entry = it.next();
-            System.out.println(" entry " + entry.getUser() + " presenza " +
-                    roster.getPresence(entry.getUser()).isAvailable() );
-            if (roster.getPresence(entry.getUser()).isAvailable() ){
-                  lista.add(entry.getUser());
-
-            }
-          
-    }
-    return lista;
-}
-    public void transferFile(String JID, File file)  {
-       
-       long remoteSize = 0;
-        Roster roster = Roster.getInstanceFor(connessione);
             String receiver = roster.getPresence(JID).getFrom();
-       while (remoteSize  < file.length()){
+          
+            this.addSendingListener();
+       while ((remoteFileSize  < file.length()) && (noStreamHost==false)){
             try {
-                requestRemoteFileSize(JID, file);
-                System.out.println("transfer" + transfers);
-                remoteSize =transfers.getOutcomingFile(
-                       new RemoteFile(receiver, file.getName()));
-                if ( remoteSize < file.length())
+   
+                requestRemoteFileSize();
+ 
+              
+                if ( remoteFileSize < file.length())
                    sendFile(JID,file);
             } catch (SmackException.NotConnectedException ex) {
-                Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
             } catch (SmackException.NoResponseException ex) {
-                Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
             } catch (XMPPErrorException ex) {
-                Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
             } catch (Exception ex) {
-                Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
             }
                   
        }       
@@ -185,8 +162,9 @@ public class SenderHandler {
 
             outFile =FileTransferManager.getInstanceFor(connessione).
                     createOutgoingFileTransfer(receiver);
+            outFile.getStreamID();
             f = new RandomAccessFile(file.getAbsolutePath(),"r");
-            f.seek(transfers.getOutcomingFile(new RemoteFile(receiver, file.getName())));
+            f.seek(remoteFileSize);
        
             os = outFile.sendFile(file.getName(), file.length(), "invio file");
              final byte[] b = new byte[512];
@@ -217,22 +195,77 @@ public class SenderHandler {
         
         } 
 
-    public synchronized void connect()  {
-        try {
-            connessione.connect();
-            connessione.login();
-        } catch (SmackException ex) {
-            Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (XMPPException ex) {
-            Logger.getLogger(SenderHandler.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
 
     public void addConnectionListener(ConnectionListener connectionListener) {
         connessione.addConnectionListener(connectionListener);
     }
+
+    private void addPacketListener(String IDIQ){
+     
+        StanzaFilter filter = new AndFilter(IQTypeFilter.ERROR,
+                        new FromMatchesFilter(JID, true));
+
+        StanzaFilter filterAND = new AndFilter(filter,new StanzaIdFilter(IDIQ));
+                     
+
+        PacketCollector myCollector = connessione.createPacketCollector(filterAND);
+
+
+
+        StanzaListener myListener = new StanzaListener() {
+
+
+            @Override
+            public void processPacket(Stanza packet) throws SmackException.NotConnectedException {
+
+                  IQ reply = (IQ)packet;
+            
+                  Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "ricevuto errore!!" + packet.getError().getType() + " code " 
+                  
+                        + 
+                          reply.getError().getErrorGenerator() +
+
+                         " " + packet.getStanzaId());
+                  
+    
+                              noStreamHost = true;
+                                 Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "fermo tutto" +
+                                         " " + packet.getStanzaId());
+              
+
+                
+            }
+        };
+
+        connessione.addAsyncStanzaListener(myListener, filterAND); 
+    }
+    private void addSendingListener(){
+            StanzaFilter filterSend = new StanzaTypeFilter(IQ.class);
+            PacketCollector collectorSend = connessione.createPacketCollector(filterSend);
+            StanzaListener listenerSend = new StanzaListener() {
+		
+
+                @Override
+                public void processPacket(Stanza packet) throws SmackException.NotConnectedException {
+
+
+
+                      IQ sendingIQ = (IQ)packet;
+                    
+                     if (sendingIQ.getChildElementNamespace().equals("http://jabber.org/protocol/bytestreams")){
+                         synchronized(lock){
+                             IDByteStream = sendingIQ.getStanzaId();
+                             addPacketListener(IDByteStream);
+                         }; Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "ricevuto il send cazzo!!" +   " code " +
+                              sendingIQ.getChildElementNamespace() + " ID" + packet.getStanzaId()); 
+                     }
+                }
+	    }; 
+            connessione.addPacketSendingListener(listenerSend, filterSend); 
+    }
+
+
+
 
    
    

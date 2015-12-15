@@ -6,31 +6,47 @@
 
 package GUI;
 
+import GUI.models.ComboModel;
+import GUI.models.TableModelIncomingFileTransfers;
+
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.logging.StreamHandler;
+import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
+import javax.swing.JTextArea;
+import javax.swing.Timer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
+import org.xmpp.xmppfiletransfer.FileReceiverHandler;
 import org.xmpp.xmppfiletransfer.XMPP;
-import org.xmpp.xmppfiletransfer.SenderHandler;
+import org.xmpp.xmppfiletransfer.ConnectionHandler;
+import org.xmpp.xmppfiletransfer.Sender;
+import org.xmpp.xmppfiletransfer.listeners.FileReceiverListener;
 
 /**
  *
  * @author ivo.dipumpo
  */
 public class Main extends javax.swing.JFrame implements ConnectionListener{
-    private volatile SenderHandler XMPPHandler = null;
+    private volatile ConnectionHandler XMPPHandler = null;
 
     /**
      * Creates new form Main
@@ -52,85 +68,84 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
-        jPanelConnectionStatus1 = new GUI.JPanelConnectionStatus();
+        jFileChooser1 = new javax.swing.JFileChooser();
+        jPanelConnectionStatus = new javax.swing.JPanel();
+        jLabelStatus = new javax.swing.JLabel();
+        jLabelColor = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
-        users1 = new GUI.Users();
-        connessione1 = new GUI.Connessione();
-        fileTransfer1 = new GUI.FileTransfer();
-        jScrollPaneTextArea = new javax.swing.JScrollPane();
-        jTextAreaOutput = new javax.swing.JTextArea();
         jScrollPaneTextAreaLog = new javax.swing.JScrollPane();
         jTextAreaLog = new javax.swing.JTextArea();
-        jPanelConnectionStatus3 = new GUI.JPanelConnectionStatus();
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jPanelConnessione = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        jTextFieldUsername = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        jTextFieldPassword = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
+        jTextFieldServer = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
+        jToggleButton1 = new javax.swing.JToggleButton();
+        jSeparator1 = new javax.swing.JSeparator();
+        jButtonConnect = new javax.swing.JButton();
+        jButtonDisconnect = new javax.swing.JButton();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0));
+        jScrollPane4 = new javax.swing.JScrollPane();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jPanelUsers = new javax.swing.JPanel();
+        jTextFieldUserToAdd = new javax.swing.JTextField();
+        jComboBoxActiveUsers = new javax.swing.JComboBox();
+        jButtonAggiungiUser = new javax.swing.JButton();
+        jLabel6 = new javax.swing.JLabel();
+        jPanelProxy = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jListProxies = new javax.swing.JList();
+        jButtonVerificaProxy = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+        jPanelFileTransfer = new javax.swing.JPanel();
+        jComboBoxUserSelect = new javax.swing.JComboBox();
+        jLabel7 = new javax.swing.JLabel();
+        jButtonSendRequest = new javax.swing.JButton();
+        jLabelFile = new javax.swing.JLabel();
+        jButtonScegliFile = new javax.swing.JButton();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        jTextAreaOutput = new javax.swing.JTextArea();
         jMenuBarConnessioni = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItemNuovaConnessione = new javax.swing.JMenuItem();
-        jMenuAspetta = new javax.swing.JMenu();
+        jMenuConnessioni = new javax.swing.JMenu();
         jMenuItemUsers = new javax.swing.JMenuItem();
+        jMenuItemVerificaProxy = new javax.swing.JMenuItem();
         jMenuItemFileTransfer = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
-        jMenuItemTextArea = new javax.swing.JMenuItem();
         jMenuItemTextAreaLog = new javax.swing.JMenuItem();
+        jMenuItemSaveTextArea = new javax.swing.JMenuItem();
+        jMenu3 = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
 
         jLabel1.setText("jLabel1");
 
-        javax.swing.GroupLayout jPanelConnectionStatus1Layout = new javax.swing.GroupLayout(jPanelConnectionStatus1);
-        jPanelConnectionStatus1.setLayout(jPanelConnectionStatus1Layout);
-        jPanelConnectionStatus1Layout.setHorizontalGroup(
-            jPanelConnectionStatus1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 553, Short.MAX_VALUE)
-        );
-        jPanelConnectionStatus1Layout.setVerticalGroup(
-            jPanelConnectionStatus1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 379, Short.MAX_VALUE)
-        );
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(150, 200));
         getContentPane().setLayout(new javax.swing.BoxLayout(getContentPane(), javax.swing.BoxLayout.PAGE_AXIS));
 
+        jPanelConnectionStatus.setBackground(new java.awt.Color(153, 255, 204));
+
+        jLabelStatus.setText("non connesso");
+        jPanelConnectionStatus.add(jLabelStatus);
+
+        jLabelColor.setBackground(java.awt.Color.red);
+        jLabelColor.setForeground(java.awt.Color.red);
+        jLabelColor.setText("non connesso");
+        jLabelColor.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jLabelColor.setOpaque(true);
+        jPanelConnectionStatus.add(jLabelColor);
+
+        getContentPane().add(jPanelConnectionStatus);
+
+        jPanel1.setMinimumSize(new java.awt.Dimension(200, 100));
+        jPanel1.setPreferredSize(new java.awt.Dimension(200, 402));
         jPanel1.setLayout(new java.awt.CardLayout());
-
-        users1.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                users1MouseClicked(evt);
-            }
-        });
-        users1.jComboBoxActiveUsers.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                users1ComboMouseClicked(evt);
-            }
-        });
-        jPanel1.add(users1, "utenti");
-
-        connessione1.jButtonConnect.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jButtonConnectMouseClicked(evt);
-            }
-        });
-        jPanel1.add(connessione1, "nuova connessione");
-
-        fileTransfer1.jButtonScegliFile.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                scegliFile(evt);
-            }
-        });
-        fileTransfer1.jComboBoxUserSelect.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                fileTransfer1ComboMouseClicked( evt);
-            }
-        });
-        fileTransfer1.jButtonSendRequest.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                sendFile(evt);
-            }
-        });
-        jPanel1.add(fileTransfer1, "file transfer");
-
-        jTextAreaOutput.setColumns(20);
-        jTextAreaOutput.setRows(5);
-        jScrollPaneTextArea.setViewportView(jTextAreaOutput);
-
-        jPanel1.add(jScrollPaneTextArea, "text area");
 
         jTextAreaLog.setColumns(20);
         jTextAreaLog.setRows(5);
@@ -138,8 +153,325 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
 
         jPanel1.add(jScrollPaneTextAreaLog, "text area log");
 
+        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        jSplitPane1.setResizeWeight(0.7);
+        jSplitPane1.setToolTipText("");
+        jSplitPane1.setAutoscrolls(true);
+        jSplitPane1.setContinuousLayout(true);
+        jSplitPane1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        jSplitPane1.setMinimumSize(new java.awt.Dimension(25, 100));
+
+        jPanelConnessione.setPreferredSize(new java.awt.Dimension(100, 50));
+
+        jLabel2.setText("utente");
+
+        jTextFieldUsername.setText("pippolo");
+
+        jLabel3.setText("password");
+
+        jTextFieldPassword.setText("cass10");
+
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel4.setText("server");
+        jLabel4.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+
+        jTextFieldServer.setText("jabber.hot-chilli.net");
+
+        jLabel5.setText("crea account");
+
+        jToggleButton1.setText("no");
+        jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleButton1ActionPerformed(evt);
+            }
+        });
+
+        jSeparator1.setForeground(new java.awt.Color(51, 102, 255));
+        jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        jButtonConnect.setText("jButton1");
+        jButtonConnect.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButtonConnectMouseClicked(evt);
+            }
+        });
+
+        jButtonDisconnect.setText("disconnect");
+        jButtonDisconnect.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButtonDisconnectMouseClicked(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanelConnessioneLayout = new javax.swing.GroupLayout(jPanelConnessione);
+        jPanelConnessione.setLayout(jPanelConnessioneLayout);
+        jPanelConnessioneLayout.setHorizontalGroup(
+            jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                .addGap(39, 39, 39)
+                .addGroup(jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                        .addGap(2, 2, 2)
+                        .addComponent(jLabel4)
+                        .addGap(34, 34, 34)
+                        .addComponent(jTextFieldServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                        .addGroup(jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel3))
+                        .addGap(20, 20, 20)
+                        .addGroup(jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jTextFieldPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                                .addComponent(jTextFieldUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel5)
+                                .addGap(26, 26, 26)
+                                .addComponent(jToggleButton1)))))
+                .addGap(54, 54, 54)
+                .addGroup(jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                        .addComponent(jButtonConnect)
+                        .addGap(40, 40, 40)
+                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jButtonDisconnect))
+                .addContainerGap(199, Short.MAX_VALUE))
+            .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(filler1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanelConnessioneLayout.setVerticalGroup(
+            jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                .addGroup(jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                        .addGap(9, 9, 9)
+                        .addComponent(jLabel2))
+                    .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                        .addGap(16, 16, 16)
+                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                        .addGap(5, 5, 5)
+                        .addGroup(jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jTextFieldUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel5)
+                            .addComponent(jToggleButton1)
+                            .addComponent(jButtonConnect))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTextFieldPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                        .addGap(4, 4, 4)
+                        .addComponent(jButtonDisconnect))
+                    .addGroup(jPanelConnessioneLayout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanelConnessioneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel4)
+                            .addComponent(jTextFieldServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jSplitPane1.setTopComponent(jPanelConnessione);
+
+        jTextFieldUserToAdd.setText("jTextField1");
+
+        jComboBoxActiveUsers.setModel(new ComboModel(new ArrayList()));
+        jComboBoxActiveUsers.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jComboBoxActiveUsersMouseClicked(evt);
+            }
+        });
+
+        jButtonAggiungiUser.setText("aggiung iutente");
+        jButtonAggiungiUser.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButtonAggiungiUserMouseClicked(evt);
+            }
+        });
+        jButtonAggiungiUser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonAggiungiUserActionPerformed(evt);
+            }
+        });
+
+        jLabel6.setBackground(new java.awt.Color(255, 51, 51));
+        jLabel6.setForeground(new java.awt.Color(255, 153, 153));
+        jLabel6.setText("utenti connessi");
+
+        javax.swing.GroupLayout jPanelUsersLayout = new javax.swing.GroupLayout(jPanelUsers);
+        jPanelUsers.setLayout(jPanelUsersLayout);
+        jPanelUsersLayout.setHorizontalGroup(
+            jPanelUsersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelUsersLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanelUsersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jComboBoxActiveUsers, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jTextFieldUserToAdd, javax.swing.GroupLayout.DEFAULT_SIZE, 119, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(jPanelUsersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButtonAggiungiUser)
+                    .addComponent(jLabel6))
+                .addContainerGap(414, Short.MAX_VALUE))
+        );
+        jPanelUsersLayout.setVerticalGroup(
+            jPanelUsersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelUsersLayout.createSequentialGroup()
+                .addGap(31, 31, 31)
+                .addGroup(jPanelUsersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jTextFieldUserToAdd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButtonAggiungiUser))
+                .addGap(57, 57, 57)
+                .addGroup(jPanelUsersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jComboBoxActiveUsers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6))
+                .addContainerGap(296, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("tab1", jPanelUsers);
+
+        jListProxies.setModel(new DefaultListModel());
+        jScrollPane2.setViewportView(jListProxies);
+
+        jButtonVerificaProxy.setText("jButton1");
+        jButtonVerificaProxy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonVerificaProxyActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanelProxyLayout = new javax.swing.GroupLayout(jPanelProxy);
+        jPanelProxy.setLayout(jPanelProxyLayout);
+        jPanelProxyLayout.setHorizontalGroup(
+            jPanelProxyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelProxyLayout.createSequentialGroup()
+                .addGap(37, 37, 37)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(67, 67, 67)
+                .addComponent(jButtonVerificaProxy)
+                .addContainerGap(371, Short.MAX_VALUE))
+        );
+        jPanelProxyLayout.setVerticalGroup(
+            jPanelProxyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelProxyLayout.createSequentialGroup()
+                .addGap(41, 41, 41)
+                .addGroup(jPanelProxyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButtonVerificaProxy)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(315, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("tab2", jPanelProxy);
+
+        jTable1.setModel(new GUI.models.TableModelIncomingFileTransfers());
+        jScrollPane1.setViewportView(jTable1);
+        TableColumnModel tcm = jTable1.getColumnModel();
+        TableModelIncomingFileTransfers model = (TableModelIncomingFileTransfers )jTable1.getModel();
+        TableColumn tc = tcm.getColumn(4);
+        tc.setCellRenderer(new ProgressRenderer());
+        int delay = 4000; //milliseconds
+        ActionListener taskPerformer = new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                ( (TableModelIncomingFileTransfers)jTable1.getModel()).fireTableDataChanged();
+            }
+        };
+        new Timer(delay, taskPerformer).start();
+
+        jTabbedPane1.addTab("tab4", jScrollPane1);
+
+        jComboBoxUserSelect.setModel(new ComboModel(new ArrayList()));
+        jComboBoxUserSelect.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jComboBoxUserSelectMouseClicked(evt);
+            }
+        });
+
+        jLabel7.setText("jLabel1");
+
+        jButtonSendRequest.setText("jButton1");
+        jButtonSendRequest.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButtonSendRequestMouseClicked(evt);
+            }
+        });
+        jButtonSendRequest.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonSendRequestActionPerformed(evt);
+            }
+        });
+
+        jLabelFile.setText("jLabel2");
+
+        jButtonScegliFile.setText("jButton1");
+        jButtonScegliFile.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButtonScegliFileMouseClicked(evt);
+            }
+        });
+        jButtonScegliFile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonScegliFileActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanelFileTransferLayout = new javax.swing.GroupLayout(jPanelFileTransfer);
+        jPanelFileTransfer.setLayout(jPanelFileTransferLayout);
+        jPanelFileTransferLayout.setHorizontalGroup(
+            jPanelFileTransferLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelFileTransferLayout.createSequentialGroup()
+                .addGap(33, 33, 33)
+                .addGroup(jPanelFileTransferLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButtonSendRequest)
+                    .addGroup(jPanelFileTransferLayout.createSequentialGroup()
+                        .addGroup(jPanelFileTransferLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabelFile, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jComboBoxUserSelect, 0, 140, Short.MAX_VALUE))
+                        .addGap(43, 43, 43)
+                        .addGroup(jPanelFileTransferLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel7)
+                            .addComponent(jButtonScegliFile))))
+                .addContainerGap(379, Short.MAX_VALUE))
+        );
+        jPanelFileTransferLayout.setVerticalGroup(
+            jPanelFileTransferLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelFileTransferLayout.createSequentialGroup()
+                .addGap(37, 37, 37)
+                .addGroup(jPanelFileTransferLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jComboBoxUserSelect, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel7))
+                .addGap(29, 29, 29)
+                .addGroup(jPanelFileTransferLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabelFile, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButtonScegliFile))
+                .addGap(18, 18, 18)
+                .addComponent(jButtonSendRequest)
+                .addContainerGap(271, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("tab5", jPanelFileTransfer);
+
+        jScrollPane4.setViewportView(jTabbedPane1);
+
+        jSplitPane1.setRightComponent(jScrollPane4);
+
+        jPanel1.add(jSplitPane1, "connessione");
+
         getContentPane().add(jPanel1);
-        getContentPane().add(jPanelConnectionStatus3);
+
+        jScrollPane3.setBackground(new java.awt.Color(204, 255, 204));
+        jScrollPane3.setAutoscrolls(true);
+        jScrollPane3.setPreferredSize(new java.awt.Dimension(166, 200));
+
+        jTextAreaOutput.setColumns(20);
+        jTextAreaOutput.setRows(5);
+        jTextAreaOutput.setMinimumSize(new java.awt.Dimension(4, 80));
+        jScrollPane3.setViewportView(jTextAreaOutput);
+
+        getContentPane().add(jScrollPane3);
 
         jMenu1.setText("File");
 
@@ -158,25 +490,38 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
 
         jMenuBarConnessioni.add(jMenu1);
 
-        jMenuAspetta.setText("Edit");
+        jMenuConnessioni.setText("Edit");
 
-        jMenuItemUsers.setText("jMenuItem1");
+        jMenuItemUsers.setText("peer");
         jMenuItemUsers.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItemUsersActionPerformed(evt);
             }
         });
-        jMenuAspetta.add(jMenuItemUsers);
+        jMenuConnessioni.add(jMenuItemUsers);
 
-        jMenuItemFileTransfer.setText("jMenuItem2");
+        jMenuItemVerificaProxy.setText("verifica proxy");
+        jMenuItemVerificaProxy.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jMenuItemVerificaProxyMouseClicked(evt);
+            }
+        });
+        jMenuItemVerificaProxy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemVerificaProxyActionPerformed(evt);
+            }
+        });
+        jMenuConnessioni.add(jMenuItemVerificaProxy);
+
+        jMenuItemFileTransfer.setText("invia file");
         jMenuItemFileTransfer.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItemFileTransferActionPerformed(evt);
             }
         });
-        jMenuAspetta.add(jMenuItemFileTransfer);
+        jMenuConnessioni.add(jMenuItemFileTransfer);
 
-        jMenuBarConnessioni.add(jMenuAspetta);
+        jMenuBarConnessioni.add(jMenuConnessioni);
 
         jMenu2.setText("textarea");
         jMenu2.addActionListener(new java.awt.event.ActionListener() {
@@ -184,14 +529,6 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
                 jMenu2ActionPerformed(evt);
             }
         });
-
-        jMenuItemTextArea.setText("jMenuItem1");
-        jMenuItemTextArea.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItemTextAreaActionPerformed(evt);
-            }
-        });
-        jMenu2.add(jMenuItemTextArea);
 
         jMenuItemTextAreaLog.setText("jMenuItem1");
         jMenuItemTextAreaLog.addActionListener(new java.awt.event.ActionListener() {
@@ -201,7 +538,32 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
         });
         jMenu2.add(jMenuItemTextAreaLog);
 
+        jMenuItemSaveTextArea.setText("salva log");
+        jMenuItemSaveTextArea.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemSaveTextAreaActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItemSaveTextArea);
+
         jMenuBarConnessioni.add(jMenu2);
+
+        jMenu3.setText("jMenu3");
+        jMenu3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenu3ActionPerformed(evt);
+            }
+        });
+
+        jMenuItem1.setText("jMenuItem1");
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        jMenu3.add(jMenuItem1);
+
+        jMenuBarConnessioni.add(jMenu3);
 
         setJMenuBar(jMenuBarConnessioni);
 
@@ -210,13 +572,13 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
 
     private void jMenuItemNuovaConnessioneMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jMenuItemNuovaConnessioneMouseClicked
         // TODO add your handling code here:
-        
+   
     }//GEN-LAST:event_jMenuItemNuovaConnessioneMouseClicked
 
     private void jMenuItemNuovaConnessioneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemNuovaConnessioneActionPerformed
         // TODO add your handling code here:
         CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
-    cl.show(this.jPanel1, "nuova connessione");
+    cl.show(this.jPanel1, "connessione");
 
     }//GEN-LAST:event_jMenuItemNuovaConnessioneActionPerformed
 
@@ -225,67 +587,77 @@ public class Main extends javax.swing.JFrame implements ConnectionListener{
           CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
     cl.show(this.jPanel1, "utenti");
     }//GEN-LAST:event_jMenuItemUsersActionPerformed
-private void jButtonConnectMouseClicked(java.awt.event.MouseEvent evt) {                                          
+private void connect(java.awt.event.ActionEvent evt) {                                          
         // TODO add your handling code here:
 
-        client = new XMPP(connessione1.jTextFieldServer.getText(), 5222, 
-                connessione1.jTextFieldUsername.getText(), 
-                connessione1.jTextFieldPassword.getText());
-       
+        client = new XMPP(jTextFieldServer.getText(), 5222, 
+                jTextFieldUsername.getText(), 
+                jTextFieldPassword.getText(), jToggleButton1.isSelected());
+        client.addFileReceiverListener((FileReceiverListener)this.jTable1.getModel());
         XMPPHandler = client.createHandler();
        
                XMPPHandler.addConnectionListener(this);
-        XMPPHandler.start();
-          System.out.println("clacla" + client);
-    }                                          
+        XMPPHandler.start(jToggleButton1.isSelected());
+       
+    }  
+private void verificaProxies(){
+    if ( XMPPHandler != null)
+        XMPPHandler.verifcaProxies();
+}
+private void setSelected(java.awt.event.ActionEvent evt){
+    if ( jToggleButton1.isSelected())
+        jToggleButton1.setText("si");
+    else jToggleButton1.setText("no");
+}
+private void disconnect(){
+    if (XMPPHandler != null)
+        XMPPHandler.getConnessione().disconnect();
+    
+}
     private void users1ComboMouseClicked(java.awt.event.MouseEvent evt) {    
 
   
-       users1.jComboBoxActiveUsers.setModel(new ComboModel(XMPPHandler.getUsers()));
-
-}   private void scegliFile(java.awt.event.ActionEvent evt){
+       this.jComboBoxActiveUsers.setModel(new ComboModel(XMPPHandler.getUsers()));
+    }
+    private void aggiungiUser(java.awt.event.MouseEvent evt) {  
+           if ( XMPPHandler != null)
+               XMPPHandler.findUser(this.jTextFieldUserToAdd.getText());
+       }  
+   private void scegliFile(){
      
-    int returnVal = fileTransfer1.jFileChooser1.showOpenDialog(this);
+    int returnVal = jFileChooser1.showOpenDialog(this);
     if(returnVal == JFileChooser.APPROVE_OPTION) {
        System.out.println("You chose to open this file: " +
-            fileTransfer1.jFileChooser1.getSelectedFile().getName());
-       fileTransfer1.jLabelFile.setText(
-               fileTransfer1.jFileChooser1.getSelectedFile().getAbsolutePath());
+            jFileChooser1.getSelectedFile().getName());
+       jLabelFile.setText(
+               jFileChooser1.getSelectedFile().getAbsolutePath());
               
     }
  
 }
-     private void fileTransfer1ComboMouseClicked(java.awt.event.MouseEvent evt){    
+     private void aggiornaContattiAttivi(){    
 
-     System.out.println("cl" + client);
-       fileTransfer1.jComboBoxUserSelect.setModel(
+   
+       jComboBoxUserSelect.setModel(
                new ComboModel(XMPPHandler.getUsers()));
 
 }
     private void sendFile(java.awt.event.MouseEvent evt){
          Thread transferThread = new Thread(new Runnable() {
             public void run() {
-                String JID =(String)fileTransfer1.jComboBoxUserSelect.getSelectedItem();
-                String filename =fileTransfer1.jLabelFile.getText();
-                File file = fileTransfer1.jFileChooser1.getSelectedFile();
-               
-                    XMPPHandler.transferFile(JID, file);
-
+                String JID =(String)jComboBoxUserSelect.getSelectedItem();
+                String filename =jLabelFile.getText();
+                File file = jFileChooser1.getSelectedFile();
+              
+                Sender sender = 
+                        XMPPHandler.createNewOutgoingFileTransfer(JID, file);
+                sender.transferFile();
                 
 
             }
          });
         transferThread.start();
     }
-    private void users1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_users1MouseClicked
-        // TODO add your handling code here:
-        if (XMPPHandler != null)
-       
-                XMPPHandler.findUser((String) 
-                        this.users1.jComboBoxActiveUsers.getSelectedItem());
-       
-    }//GEN-LAST:event_users1MouseClicked
-
     private void jMenuItemFileTransferActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemFileTransferActionPerformed
         // TODO add your handling code here:
           CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
@@ -297,18 +669,121 @@ private void jButtonConnectMouseClicked(java.awt.event.MouseEvent evt) {
     
     }//GEN-LAST:event_jMenu2ActionPerformed
 
-    private void jMenuItemTextAreaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemTextAreaActionPerformed
-        // TODO add your handling code here:
-              CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
-    cl.show(this.jPanel1, "text area");
-    }//GEN-LAST:event_jMenuItemTextAreaActionPerformed
-
     private void jMenuItemTextAreaLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemTextAreaLogActionPerformed
         // TODO add your handling code here:
          CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
          cl.show(this.jPanel1, "text area log");
     }//GEN-LAST:event_jMenuItemTextAreaLogActionPerformed
 
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        // TODO add your handling code here:
+         CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
+         cl.show(this.jPanel1, "file in ingresso");
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void jMenu3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenu3ActionPerformed
+        // TODO add your handling code here:
+        CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
+         cl.show(this.jPanel1, "file in ingresso");
+    }//GEN-LAST:event_jMenu3ActionPerformed
+
+    private void jMenuItemSaveTextAreaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemSaveTextAreaActionPerformed
+        // TODO add your handling code here:
+         int returnVal = jFileChooser1.showSaveDialog(this);
+        if(returnVal == JFileChooser.APPROVE_OPTION) {
+           System.out.println("You chose to open this file: " +
+            jFileChooser1.getSelectedFile().getName());
+           
+            JTextArea area = this.jTextAreaOutput;
+            try {
+                FileWriter fw = new FileWriter(jFileChooser1.getSelectedFile());
+                BufferedWriter fileOut = new BufferedWriter(fw);
+               area.write(fileOut);
+            } catch (IOException ex) {
+             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            }
+    }//GEN-LAST:event_jMenuItemSaveTextAreaActionPerformed
+}
+    private void jMenuItemVerificaProxyMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jMenuItemVerificaProxyMouseClicked
+        // TODO add your handling code here:
+          CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
+         cl.show(this.jPanel1, "proxy");
+    }//GEN-LAST:event_jMenuItemVerificaProxyMouseClicked
+
+    private void jMenuItemVerificaProxyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemVerificaProxyActionPerformed
+        // TODO add your handling code here:
+        CardLayout cl = (CardLayout)(this.jPanel1.getLayout());
+         cl.show(this.jPanel1, "proxy");
+    }//GEN-LAST:event_jMenuItemVerificaProxyActionPerformed
+
+    private void jButtonVerificaProxyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonVerificaProxyActionPerformed
+        // TODO add your handling code here:
+        ((DefaultListModel)jListProxies.getModel()).removeAllElements();
+        if (XMPPHandler.getConnessione() != null){
+            ArrayList lista = XMPPHandler.verifcaProxies();
+            for ( int i = 0 ; i < lista.size(); i = i + 1)
+            ((DefaultListModel)jListProxies.getModel()).addElement(lista.get(i));
+        }
+
+    }//GEN-LAST:event_jButtonVerificaProxyActionPerformed
+
+    private void jButtonAggiungiUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAggiungiUserActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButtonAggiungiUserActionPerformed
+
+    private void jButtonAggiungiUserMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonAggiungiUserMouseClicked
+        // TODO add your handling code here:
+        aggiungiUser(evt);
+    }//GEN-LAST:event_jButtonAggiungiUserMouseClicked
+
+    private void jComboBoxActiveUsersMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jComboBoxActiveUsersMouseClicked
+        // TODO add your handling code here:
+        users1ComboMouseClicked(evt);
+    }//GEN-LAST:event_jComboBoxActiveUsersMouseClicked
+
+    private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
+        // TODO add your handling code here:
+        if ( jToggleButton1.isSelected())
+        jToggleButton1.setText("si");
+        else jToggleButton1.setText("no");
+    }//GEN-LAST:event_jToggleButton1ActionPerformed
+
+    private void jButtonDisconnectMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonDisconnectMouseClicked
+        // TODO add your handling code here:
+        if (XMPPHandler != null)
+        XMPPHandler.getConnessione().disconnect();
+
+    }//GEN-LAST:event_jButtonDisconnectMouseClicked
+
+    private void jButtonConnectMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonConnectMouseClicked
+        // TODO add your handling code here:
+        this.connect(null);
+    }//GEN-LAST:event_jButtonConnectMouseClicked
+
+    private void jButtonScegliFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonScegliFileActionPerformed
+        // TODO add your handling code here:
+        scegliFile();
+    }//GEN-LAST:event_jButtonScegliFileActionPerformed
+
+    private void jButtonSendRequestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSendRequestActionPerformed
+       
+    }//GEN-LAST:event_jButtonSendRequestActionPerformed
+
+    private void jButtonSendRequestMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonSendRequestMouseClicked
+        // TODO add your handling code here: 
+        sendFile(evt);
+    }//GEN-LAST:event_jButtonSendRequestMouseClicked
+
+    private void jButtonScegliFileMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonScegliFileMouseClicked
+        // TODO add your handling code here:
+       scegliFile();  
+    }//GEN-LAST:event_jButtonScegliFileMouseClicked
+
+    private void jComboBoxUserSelectMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jComboBoxUserSelectMouseClicked
+        // TODO add your handling code here:
+        aggiornaContattiAttivi();
+    }//GEN-LAST:event_jComboBoxUserSelectMouseClicked
+    
     /**
      * @param args the command line arguments
      */
@@ -346,63 +821,110 @@ private void jButtonConnectMouseClicked(java.awt.event.MouseEvent evt) {
  XMPP client = null;
  TextAreaHandler handler;
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private GUI.Connessione connessione1;
-    private GUI.FileTransfer fileTransfer1;
+    private javax.swing.Box.Filler filler1;
+    public javax.swing.JButton jButtonAggiungiUser;
+    private javax.swing.JButton jButtonConnect;
+    private javax.swing.JButton jButtonDisconnect;
+    public javax.swing.JButton jButtonScegliFile;
+    public javax.swing.JButton jButtonSendRequest;
+    private javax.swing.JButton jButtonVerificaProxy;
+    public javax.swing.JComboBox jComboBoxActiveUsers;
+    public javax.swing.JComboBox jComboBoxUserSelect;
+    public javax.swing.JFileChooser jFileChooser1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabelColor;
+    public javax.swing.JLabel jLabelFile;
+    private javax.swing.JLabel jLabelStatus;
+    private javax.swing.JList jListProxies;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
-    private javax.swing.JMenu jMenuAspetta;
+    private javax.swing.JMenu jMenu3;
     private javax.swing.JMenuBar jMenuBarConnessioni;
+    private javax.swing.JMenu jMenuConnessioni;
+    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItemFileTransfer;
     private javax.swing.JMenuItem jMenuItemNuovaConnessione;
-    private javax.swing.JMenuItem jMenuItemTextArea;
+    private javax.swing.JMenuItem jMenuItemSaveTextArea;
     private javax.swing.JMenuItem jMenuItemTextAreaLog;
     private javax.swing.JMenuItem jMenuItemUsers;
+    private javax.swing.JMenuItem jMenuItemVerificaProxy;
     private javax.swing.JPanel jPanel1;
-    private GUI.JPanelConnectionStatus jPanelConnectionStatus1;
-    private GUI.JPanelConnectionStatus jPanelConnectionStatus3;
-    private javax.swing.JScrollPane jScrollPaneTextArea;
+    private javax.swing.JPanel jPanelConnectionStatus;
+    private javax.swing.JPanel jPanelConnessione;
+    private javax.swing.JPanel jPanelFileTransfer;
+    private javax.swing.JPanel jPanelProxy;
+    private javax.swing.JPanel jPanelUsers;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPaneTextAreaLog;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTable jTable1;
     private javax.swing.JTextArea jTextAreaLog;
     private javax.swing.JTextArea jTextAreaOutput;
-    private GUI.Users users1;
+    private javax.swing.JTextField jTextFieldPassword;
+    private javax.swing.JTextField jTextFieldServer;
+    public javax.swing.JTextField jTextFieldUserToAdd;
+    private javax.swing.JTextField jTextFieldUsername;
+    private javax.swing.JToggleButton jToggleButton1;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public void connected(XMPPConnection connection) {
 
-       this.jPanelConnectionStatus3.jLabelStatus.setText("connesso : in autenticazione");
+      jLabelStatus.setText("connesso, not logged");
        System.out.println("fanto");
+       this.jButtonConnect.setEnabled(false);
     }
 
     @Override
     public void authenticated(XMPPConnection connection, boolean resumed) {
-         this.jPanelConnectionStatus3.jLabelColor.setBackground(Color.green);
-         this.jPanelConnectionStatus3.jLabelColor.setForeground(Color.green);
-          this.jPanelConnectionStatus3.jLabelStatus.setText("autenticato");
+        jLabelColor.setBackground(Color.green);
+         jLabelColor.setForeground(Color.green);
+          jLabelStatus.setText("autenticato");
+     
+            jMenuConnessioni.setEnabled(true);
     }
 
     @Override
     public void connectionClosed() {
-      
+       jLabelColor.setBackground(Color.RED);
+        jLabelColor.setForeground(Color.RED);
+          jLabelStatus.setText("connessione chiusa ");
+      jButtonConnect.setEnabled(true);
+ 
+      jMenuConnessioni.setEnabled(false);
     }
 
     @Override
     public void connectionClosedOnError(Exception e) {
-        this.jPanelConnectionStatus3.jLabelColor.setBackground(Color.RED);
-         this.jPanelConnectionStatus3.jLabelColor.setForeground(Color.RED);
-          this.jPanelConnectionStatus3.jLabelStatus.setText("connessione chiusa per errore");
+        jLabelColor.setBackground(Color.RED);
+        jLabelColor.setForeground(Color.RED);
+          jLabelStatus.setText("connessione chiusa per errore");
+          jMenuConnessioni.setEnabled(false);
          
     }
 
     @Override
     public void reconnectionSuccessful() {
-       
+       jLabelStatus.setText(
+                 "connesso nuovamente");
+         jMenuConnessioni.setEnabled(true);
     }
 
     @Override
     public void reconnectingIn(int seconds) {
-       
+         jLabelStatus.setText(
+                 "tentativo di connesione tra " + seconds +" secondi");
     }
 
     @Override
@@ -410,14 +932,19 @@ private void jButtonConnectMouseClicked(java.awt.event.MouseEvent evt) {
         
     }
     private void setHanlder(){
-      outputStream = new TextAreaOutputStream(this.jTextAreaOutput);
+      
        PrintStream printStream = new PrintStream(new TextAreaOutputStream(
                this.jTextAreaOutput));
-        handler=new TextAreaHandler(this.jTextAreaLog);
-          handler.setLevel(Level.ALL);
-          Logger.getLogger(XMPP.class.getName()).addHandler(handler);
-          System.setOut(printStream);
+       System.setOut(printStream);
         System.setErr(printStream);
+        handler=new TextAreaHandler(this.jTextAreaOutput);
+    
+          handler.setLevel(Level.ALL);
+          handler.setFormatter(new java.util.logging.SimpleFormatter());
+         
+          Logger.getLogger(XMPP.class.getName()).addHandler(handler);
+          
        
     }
 }
+/*}*/

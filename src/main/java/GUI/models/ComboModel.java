@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package GUI;
+package GUI.models;
 
 import java.util.ArrayList;
 import javax.swing.AbstractListModel;
