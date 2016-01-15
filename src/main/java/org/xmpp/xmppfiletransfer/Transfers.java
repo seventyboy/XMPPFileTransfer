@@ -14,7 +14,7 @@ import java.util.HashMap;
 public class Transfers {
     private  final HashMap<RemoteFile,Long> incomingFiles = new HashMap();
     private  final HashMap<RemoteFile,Long> outcomingFiles = new HashMap();
-    public  String DIR = "c:\\users";
+    private static   String DIR = "c:\\users";
 
     public Transfers() {
     }
@@ -24,6 +24,14 @@ public class Transfers {
            return incomingFiles.put(key, value); 
         }
         
+    }
+
+    public static String getDIR() {
+        return DIR;
+    }
+
+    public static void setDIR(String DIR) {
+        Transfers.DIR = DIR;
     }
 
     public Long getIncomingFile(Object key) {

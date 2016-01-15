@@ -13,18 +13,19 @@ import javax.swing.table.AbstractTableModel;
 import org.jivesoftware.smackx.filetransfer.IncomingFileTransfer;
 import org.xmpp.xmppfiletransfer.TransferMonitor;
 import org.xmpp.xmppfiletransfer.listeners.FileReceiverListener;
+import org.xmpp.xmppfiletransfer.listeners.FileSenderListener;
 
 /**
  *
  * @author ivo.dipumpo
  */
-public class TableModelIncomingFileTransfers extends AbstractTableModel implements
-        FileReceiverListener{
+public class TableModelOutcomingFileTransfers extends AbstractTableModel implements
+        FileSenderListener{
       private static final String[] columnNames = {
                 "requestor",
                 "file name",
                 "size ",
-                "remote size",
+                "local size",
                 "avanzamento",
                 "bytes inviati",
                 "velocità",
@@ -36,35 +37,17 @@ public class TableModelIncomingFileTransfers extends AbstractTableModel implemen
                 java.lang.String.class
               
             };
-    private final CopyOnWriteArrayList<TransferMonitor> incomingFiles = 
+    private final CopyOnWriteArrayList<TransferMonitor> outcomingFiles = 
             new CopyOnWriteArrayList();
 
-    public CopyOnWriteArrayList<TransferMonitor> getIncomingFiles() {
-        return incomingFiles;
-    }
-
-    @Override
-    public void newIncomingFile(TransferMonitor inFile) {
-        
-        incomingFiles.add(inFile);
-        this.fireTableDataChanged();
-       
+    public CopyOnWriteArrayList<TransferMonitor> getOutcomingFiles() {
+        return outcomingFiles;
     }
 
    
-
-    @Override
-    public void incomingFileExpired(TransferMonitor inFile) {
-        
-        
-          incomingFiles.remove(inFile);
-        this.fireTableDataChanged();
-  
-    }
-  
     @Override
     public int getRowCount() {
-      return incomingFiles.size();
+      return outcomingFiles.size();
     }
 
     @Override
@@ -88,33 +71,33 @@ public class TableModelIncomingFileTransfers extends AbstractTableModel implemen
             
             switch (columnIndex){
                case 0 :
-                       ritorno = incomingFiles.get(rowIndex).getFileTransfer().getPeer();
+                       ritorno = outcomingFiles.get(rowIndex).getFileTransfer().getPeer();
                        break;
                case 1 :
-                       ritorno = incomingFiles.get(rowIndex).getFileTransfer().getFileName();
+                       ritorno = outcomingFiles.get(rowIndex).getFileTransfer().getFileName();
                        break;
                case 2 :
-                       ritorno = incomingFiles.get(rowIndex).getFileTransfer().getFileSize();
+                       ritorno = outcomingFiles.get(rowIndex).getFileTransfer().getFileSize();
                        break;
                case 3 :
-                       ritorno = incomingFiles.get(rowIndex).getSize();
+                       ritorno = outcomingFiles.get(rowIndex).getSize();
                        break;
                case 4 :
                       JProgressBar bar = new JProgressBar();
                    
-                      bar.setValue(incomingFiles.get(rowIndex).getProgress());
+                      bar.setValue(outcomingFiles.get(rowIndex).getProgress());
                        ritorno = bar ;
                        break;
                case 5 :
-                       ritorno =incomingFiles.get(rowIndex).getTransferredBytes() ;
+                       ritorno =outcomingFiles.get(rowIndex).getTransferredBytes() ;
                     break;
                case 6:
-                       ritorno = incomingFiles.get(rowIndex).getSpeed();
+                       ritorno = outcomingFiles.get(rowIndex).getSpeed();
                        
                     break;
                    
                case 7 :
-                        ritorno = incomingFiles.get(rowIndex).getStatus();
+                        ritorno = outcomingFiles.get(rowIndex).getStatus();
                     break;     
               
      
@@ -123,6 +106,18 @@ public class TableModelIncomingFileTransfers extends AbstractTableModel implemen
          
         return ritorno;
     } 
+
+    @Override
+    public void newOutcomingFile(TransferMonitor inFile) {
+      outcomingFiles.add(inFile);
+        this.fireTableDataChanged();
+    }
+
+    @Override
+    public void outcomingFileExpired(TransferMonitor inFile) {
+       outcomingFiles.remove(inFile);
+        this.fireTableDataChanged();
+    }
   
    
   

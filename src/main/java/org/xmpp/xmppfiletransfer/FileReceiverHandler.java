@@ -39,97 +39,97 @@ public class FileReceiverHandler implements FileTransferListener{
     }
       public void fileTransferRequest(final FileTransferRequest request) {
       
-       System.out.println("avviato nuovo trasferimento" +request.getStreamID());
-            request.getFileName();
-            final long fileSize = request.getFileSize();
-            request.getDescription();
-            request.getRequestor();
-            final IncomingFileTransfer transfer = request.accept();
-         Thread transferThread;
-          transferThread = new Thread(new Runnable() {
+     
+        request.getFileName();
+        final long fileSize = request.getFileSize();
+        request.getDescription();
+        request.getRequestor();
+        final IncomingFileTransfer transfer = request.accept();
+        Thread transferThread;
+        transferThread = new Thread(new Runnable() {
            
-       
+    
               
-                      public void run() {
-                          InputStream is = null;
-                          TransferMonitor monitor  = null;
-                          int count = 0;
-                          long amountRead = 0;
-                          double speed = 0;
-                          RandomAccessFile raf = null;
-                          long localSize = 0;
-                            
-                            Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "disconnesso" + transfer.getStreamID());
-                        
-                          try {
-                              is = transfer.recieveFile();
-                              
-                                                            
-                              
-                              
-                              
-                              
-                              raf = new RandomAccessFile(transfers.DIR + File.separator + request.getFileName(),
-                                      "rw");
-                              raf.seek(transfers.getIncomingFile(
-                                      new RemoteFile(request.getRequestor(), request.getFileName())));
-                              System.out.println("il file parte da" + raf.getFilePointer());
-                              localSize = raf.getFilePointer();
-                              monitor = new TransferMonitor(transfer);
-                              listener.newIncomingFile(monitor);
-                              
-                              
-                              long startingTime = System.currentTimeMillis();
-                              final byte[] b = new byte[512];
-                              
-                              
-                              
-                              
-                              while ((count = is.read(b)) >= 0 ) {
-                                  
-                                  
-                                  
-                                  raf.write(b, 0, count);
-                                  amountRead += count;
-                                  if (System.currentTimeMillis()  > startingTime)
-                                      speed = amountRead/(System.currentTimeMillis() - startingTime);
-                                  
-                                  
-                                  monitor.setTransferData( localSize, amountRead,
-                                          (int)((double)(localSize + amountRead)/(double)fileSize*100), speed, transfer.getStreamID() + " " + Thread.activeCount());
-                              }
-                          } catch (FileNotFoundException ex) {
-                              Logger.getLogger(FileReceiverHandler.class.getName()).log(Level.SEVERE, null, ex);
-                          } catch (IOException ex) {
-                              Logger.getLogger(FileReceiverHandler.class.getName()).log(Level.SEVERE, null, ex);
-                          }  catch (SmackException ex) {
-                              Logger.getLogger(FileReceiverHandler.class.getName()).log(Level.SEVERE, null, ex);
-                          } catch (XMPPException.XMPPErrorException ex) {
-                              Logger.getLogger(FileReceiverHandler.class.getName()).log(Level.SEVERE, null, ex);
-                          } finally{
-                              try {
-                                  
-                                  if (is != null)
-                                      is.close();
-                                  if (raf != null)
-                                      raf.close();
-                                  File f = new File(transfers.DIR + File.separator + request.getFileName());
-                                  System.out.println("stream chisui" + f.length());
-                                  
-                              } catch (IOException e) {
-                                  Logger.getLogger(XMPP.class.getName()).log(Level.SEVERE, null,e);
-                                  
-                              }
-                              listener.incomingFileExpired(monitor);
-                              System.out.println("chiuso ransfer" + transfer.getStreamID());
-                                Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "disconnesso" );
-                          }
-                          
-                           Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "disconnesso" );
-                      }
-                  
-          });
-         transferThread.start();
+           public void run() {
+              InputStream is = null;
+              TransferMonitor monitor  = null;
+              int count = 0;
+              long amountRead = 0;
+              double speed = 0;
+              RandomAccessFile raf = null;
+              long localSize = 0;
+
+                Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "disconnesso" + transfer.getStreamID());
+
+              try {
+                  is = transfer.recieveFile();
+
+
+
+
+
+
+                  raf = new RandomAccessFile(transfers.getDIR()+ File.separator + request.getFileName(),
+                          "rw");
+                  raf.seek(transfers.getIncomingFile(
+                          new RemoteFile(request.getRequestor(), request.getFileName())));
+                  System.out.println("il file parte da" + raf.getFilePointer());
+                  localSize = raf.getFilePointer();
+                  monitor = new TransferMonitor(transfer);
+                  listener.newIncomingFile(monitor);
+
+
+                  long startingTime = System.currentTimeMillis();
+                  final byte[] b = new byte[512];
+
+
+
+
+                  while ((count = is.read(b)) >= 0 ) {
+
+
+
+                      raf.write(b, 0, count);
+                      amountRead += count;
+                      if (System.currentTimeMillis()  > startingTime)
+                          speed = amountRead/(System.currentTimeMillis() - startingTime);
+
+
+                      monitor.setTransferData( localSize, amountRead,
+                              (int)((double)(localSize + amountRead)/(double)fileSize*100), speed, transfer.getStreamID() + " " + Thread.activeCount());
+                  }
+              } catch (FileNotFoundException ex) {
+                  Logger.getLogger(FileReceiverHandler.class.getName()).log(Level.SEVERE, null, ex);
+              } catch (IOException ex) {
+                  Logger.getLogger(FileReceiverHandler.class.getName()).log(Level.SEVERE, null, ex);
+              }  catch (SmackException ex) {
+                  Logger.getLogger(FileReceiverHandler.class.getName()).log(Level.SEVERE, null, ex);
+              } catch (XMPPException.XMPPErrorException ex) {
+                  Logger.getLogger(FileReceiverHandler.class.getName()).log(Level.SEVERE, null, ex);
+              } finally{
+                  try {
+
+                      if (is != null)
+                          is.close();
+                      if (raf != null)
+                          raf.close();
+                      File f = new File(Transfers.getDIR() + File.separator + request.getFileName());
+                      System.out.println("stream chisui" + f.length());
+
+                  } catch (IOException e) {
+                      Logger.getLogger(XMPP.class.getName()).log(Level.SEVERE, null,e);
+
+                  }
+                  listener.incomingFileExpired(monitor);
+                  System.out.println("chiuso ransfer" + transfer.getStreamID());
+                    Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "disconnesso" );
+              }
+
+               Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "disconnesso" );
+          }
+
+        });
+        transferThread.start();
     }
      
     
@@ -142,7 +142,7 @@ public class FileReceiverHandler implements FileTransferListener{
 
     public void setListener(FileReceiverListener listener) {
         this.listener = listener;
-        System.out.println("listener " + listener.toString());
+       
     }
 
 

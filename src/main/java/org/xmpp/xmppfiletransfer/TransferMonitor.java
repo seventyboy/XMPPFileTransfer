@@ -29,10 +29,10 @@ public class TransferMonitor {
     public int getProgress() {
         return progress;
     }
-    private long bytesRead;
+    private long transferredBytes;
 
-    public long getBytesRead() {
-        return bytesRead;
+    public long getTransferredBytes() {
+        return transferredBytes;
     }
     private String status;
 
@@ -40,26 +40,26 @@ public class TransferMonitor {
         return status;
     }
 
-    private long localSize;
+    private long size;
 
-    public long getLocalSize() {
-        return localSize;
+    public long getSize() {
+        return size;
     }
 
     public void setProgress(int progress) {
         this.progress = progress;
     }
 
-    public void setBytesRead(long bytesRead) {
-        this.bytesRead = bytesRead;
+    public void setTransferredBytes(long transferredBytes) {
+        this.transferredBytes = transferredBytes;
     }
 
     public void setStatus(String status) {
         this.status = status;
     }
 
-    public void setLocalSize(long localSize) {
-        this.localSize = localSize;
+    public void setSize(long size) {
+        this.size = size;
     }
     private double speed;
 
@@ -73,8 +73,8 @@ public class TransferMonitor {
 
     public void setTransferData(long localSize, long bytesRead, int progress, double speed, String status) {
         
-            setLocalSize(localSize);
-           setBytesRead(bytesRead);
+            setSize(localSize);
+           setTransferredBytes(bytesRead);
            setProgress(progress);
            setSpeed(speed);
            setStatus(status);

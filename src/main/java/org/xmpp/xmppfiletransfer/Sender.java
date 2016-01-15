@@ -44,6 +44,8 @@ import org.jivesoftware.smackx.filetransfer.FileTransferNegotiator;
 import org.jivesoftware.smackx.filetransfer.FileTransferRequest;
 import org.jivesoftware.smackx.filetransfer.IncomingFileTransfer;
 import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
+import org.xmpp.xmppfiletransfer.listeners.FileReceiverListener;
+import org.xmpp.xmppfiletransfer.listeners.FileSenderListener;
 
 /**
  *
@@ -146,9 +148,14 @@ public class Sender {
    
 
    
-    private void sendFile(String JID, File file) throws Exception{
+    private void sendFile(String JID, File file) {
             OutputStream os = null;
-    
+              TransferMonitor monitor  = null;
+              int count = 0;
+              long amountWritten = 0;
+              double speed = 0;
+
+              long remoteSize = 0;
             OutgoingFileTransfer outFile;
             RandomAccessFile f = null;
             InputStream fin = null;
@@ -162,38 +169,65 @@ public class Sender {
 
             outFile =FileTransferManager.getInstanceFor(connessione).
                     createOutgoingFileTransfer(receiver);
+            
+              
             outFile.getStreamID();
+              try {
             f = new RandomAccessFile(file.getAbsolutePath(),"r");
+             
             f.seek(remoteFileSize);
        
             os = outFile.sendFile(file.getName(), file.length(), "invio file");
-             final byte[] b = new byte[512];
-            int count = 0;
+            
+            monitor = new TransferMonitor(outFile);
+            listener.newOutcomingFile(monitor);
+            remoteSize = remoteFileSize;
+            
+            final byte[] b = new byte[512];
+            long startingTime = System.currentTimeMillis();
            
-            int amountWritten = 0;
+           
                System.out.println("file poniter" + f.getFilePointer() + "lunghezza" + f.length());
-            try {
+       
                     
                 while ((count = f.read(b)) > 0 ) {
             
                            os.write(b, 0, count);
                    
                     amountWritten += count;
-               
+                     if (System.currentTimeMillis()  > startingTime)
+                                      speed = amountWritten/(System.currentTimeMillis() - startingTime);
+                                  
+                                  
+                    monitor.setTransferData( remoteSize, amountWritten,
+                          (int)((double)(remoteSize + amountWritten)/(double)file.length()*100),
+                          speed, outFile.getStreamID() + " " + Thread.activeCount());
                 }
                              
-            }finally {
-                  System.out.println("file ponte5r" + f.getFilePointer() + " ultimo count"
-               + count + " ulrtimo qmonuy" +     amountWritten );
+            } catch (FileNotFoundException ex) {
+            Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (XMPPException ex) {
+            Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SmackException ex) {
+            Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
+        }finally {
+               
                     try {
-                        
-                        f.close();
+                           System.out.println("file ponte5r" + f.getFilePointer() + " ultimo count"
+               + count + " ulrtimo qmonuy" +     amountWritten );
+                       
+                           if ( f!= null)
+                               f.close();
+                           if (os != null)
+                               os.close();
                     } catch (IOException ex) {
                         Logger.getLogger(XMPP.class.getName()).log(Level.SEVERE, null, ex);
                     }
-             }
-        
-        } 
+         }
+        listener.outcomingFileExpired(monitor);
+    } 
 
 
     public void addConnectionListener(ConnectionListener connectionListener) {
@@ -219,7 +253,7 @@ public class Sender {
             public void processPacket(Stanza packet) throws SmackException.NotConnectedException {
 
                   IQ reply = (IQ)packet;
-            
+     
                   Logger.getLogger(XMPP.class.getName()).log(Level.INFO, "ricevuto errore!!" + packet.getError().getType() + " code " 
                   
                         + 
@@ -267,6 +301,16 @@ public class Sender {
 
 
 
-   
+   private FileSenderListener listener;
+
+    public FileSenderListener getListener() {
+        return listener;
+    }
+
+    public void setListener(FileSenderListener listener) {
+        this.listener = listener;
+       
+    }
+  
    
 }

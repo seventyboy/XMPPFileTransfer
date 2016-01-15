@@ -39,6 +39,7 @@ import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
+import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smackx.bytestreams.socks5.packet.Bytestream;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
@@ -81,14 +82,17 @@ public class ConnectionHandler {
             System.out.println("creaz supp" +   AccountManager.getInstance(connessione).getAccountAttributes());
             if (creaPassword){
                AccountManager.getInstance(connessione).sensitiveOperationOverInsecureConnection(true);
+               System.out.println("c op" + connessione.getConfiguration().getUsername() + " " + 
+                    connessione.getConfiguration().getPassword());   
                AccountManager.getInstance(connessione).createAccount(
                        (String)connessione.getConfiguration().getUsername(),
                        connessione.getConfiguration().getPassword());
+               
             }    
           
            
        
-       
+            if (!connessione.isAuthenticated())
             connessione.login();
           Logger.getLogger(XMPP.class.getName());
         } catch (SmackException ex) {
@@ -136,8 +140,7 @@ public class ConnectionHandler {
         Iterator<RosterEntry>it = roster.getEntries().iterator();
         while (it.hasNext()){
             RosterEntry entry = it.next();
-            System.out.println(" entry " + entry.getUser() + " presenza " +
-                    roster.getPresence(entry.getUser()).isAvailable() );
+      
             if (roster.getPresence(entry.getUser()).isAvailable() ){
                   lista.add(entry.getUser());
 
@@ -158,12 +161,14 @@ public class ConnectionHandler {
     public void addConnectionListener(ConnectionListener connectionListener) {
         connessione.addConnectionListener(connectionListener);
     }
-
+    public void addRosterListener(RosterListener listener){
+        Roster.getInstanceFor(connessione).addRosterListener(listener);
+    }
    public ArrayList verifcaProxies(){
        ArrayList listaProxy = new ArrayList();
          
         XMPPConnection connection = this.connessione;
-        ServiceDiscoveryManager serviceDiscoveryManager = ServiceDiscoveryManager.getInstanceFor(connection);
+        ServiceDiscoveryManager serviceDiscoveryManager = ServiceDiscoveryManager.getInstanceFor(connessione);
 
         ArrayList<String> proxies = new ArrayList<String>();
 

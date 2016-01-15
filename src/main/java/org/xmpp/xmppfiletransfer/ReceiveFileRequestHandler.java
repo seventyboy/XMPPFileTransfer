@@ -44,8 +44,8 @@ public class ReceiveFileRequestHandler extends AbstractIqRequestHandler {
         IQRemoteSize p = (IQRemoteSize) iqRequest;
         if (p.getType() == IQ.Type.get){
             String filename = p.getFilename();
-            File f = new File(transfers.DIR + File.separator + filename);
-            System.out.println(transfers.DIR + File.separator + filename);
+            File f = new File(transfers.getDIR() + File.separator + filename);
+            System.out.println(transfers.getDIR() + File.separator + filename);
             if (!f.exists())
 
                     try {
